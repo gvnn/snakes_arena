@@ -1,4 +1,4 @@
-Calssic snakes video game with a networking twist.
+Classic snakes video game with a networking twist.
 
 License: GPLv2
 
@@ -7,4 +7,3 @@ Requirements:
 - python 2.6 or newer
 - pyglet 1.1.4 or newer
 - cocos2d 0.5rc0 or newer
-- pyro4
