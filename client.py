@@ -1,17 +1,21 @@
-import config
+#!/usr/bin/env python
 import socket
-import sys
 
-HOST, PORT = config.config_values["server"]["host"], int(config.config_values["server"]["port"])
-data = " ".join(sys.argv[1:])
+conf = None #config obj
 
-# SOCK_DGRAM is the socket type to use for UDP sockets
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+class SnakeClient:
+    
+    _sock = None
+    _server_ip = ""
+    _server_port = ""
+    
+    def __init__(self, ip, port):
+        conf.logger.debug('SnakeClient __init__')
+        self._server_ip = ip
+        self._server_port = port
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# As you can see, there is no connect() call; UDP has no connections.
-# Instead, data is directly sent to the recipient via sendto().
-sock.sendto(data + "\n", (HOST, PORT))
-received = sock.recv(1024)
-
-print "Sent:     %s" % data
-print "Received: %s" % received
+    def connect(self):
+        """docstring for connect"""
+        self._sock.connect((self._server_ip, self._server_port))
+        self._sock.send("hissssss")
