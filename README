@@ -7,3 +7,4 @@ Requirements:
 - python 2.6 or newer
 - pyglet 1.1.4 or newer
 - cocos2d 0.5rc0 or newer
+- netifaces
