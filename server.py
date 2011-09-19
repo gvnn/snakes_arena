@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-import SocketServer
 import os
 import socket
-
-conf = None #config obj
+import select
+import string
 
 def get_available_ips():
     ips = []
@@ -22,71 +21,66 @@ def get_available_ips():
         ips.append("127.0.0.1")
         ips.append(socket.gethostbyname(socket.gethostname()))
     return ips
-
-class SnakeRequestHandler(SocketServer.BaseRequestHandler):
     
-    def __init__(self, request, client_address, server):
-        conf.logger.debug('%s %s' % client_address)
-        SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
-        socket = self.request[1]
-        server._tmp_clients.append(socket)
-        return
-
-    def setup(self):
-        conf.logger.debug('setup')
-        return SocketServer.BaseRequestHandler.setup(self)
-
-    def handle(self):
-        data = self.request[0].strip()
-        socket = self.request[1]
-        conf.logger.info("%s wrote: %s" % (self.client_address, data))
-        return
-
-    def finish(self):
-        conf.logger.debug('finish')
-        return SocketServer.BaseRequestHandler.finish(self)
-
-class SnakeServer(SocketServer.TCPServer):
+class SnakeServer():
     
-    _tmp_clients = []
+    _confobj = None #: config object
     
-    def __init__(self, server_address, handler_class=SnakeRequestHandler):
-        conf.logger.debug('%s', server_address)
-        SocketServer.TCPServer.__init__(self, server_address, handler_class)
-        return
+    _server_ip = ""
+    
+    _server_port = 0
+    
+    _server_socket = None
+    
+    CONNECTION_LIST = [] #: List to keep track of socket descriptors
+    
+    def __init__(self, ip, port, conf):
+        self._confobj = conf
+        self._server_ip = ip
+        self._server_port = port
 
-    def server_activate(self):
-        conf.logger.debug('server_activate')
-        SocketServer.TCPServer.server_activate(self)
-        return
-
-    def serve_forever(self):
-        conf.logger.debug('waiting for request')
-        conf.logger.info('Handling requests')
-        while True:
-            self.handle_request()
-        return
-
-    def handle_request(self):
-        conf.logger.debug('handle_request')
-        return SocketServer.TCPServer.handle_request(self)
-
-    def verify_request(self, request, client_address):
-        conf.logger.debug('verify_request(%s, %s)', request, client_address)
-        return SocketServer.TCPServer.verify_request(self, request, client_address)
-
-    def process_request(self, request, client_address):
-        conf.logger.debug('process_request(%s, %s)', request, client_address)
-        return SocketServer.TCPServer.process_request(self, request, client_address)
-
-    def server_close(self):
-        conf.logger.debug('server_close')
-        return SocketServer.TCPServer.server_close(self)
-
-    def finish_request(self, request, client_address):
-        conf.logger.debug('finish_request(%s, %s)', request, client_address)
-        return SocketServer.TCPServer.finish_request(self, request, client_address)
-
-    def close_request(self, request_address):
-        conf.logger.debug('close_request(%s)', request_address)
-        return SocketServer.TCPServer.close_request(self, request_address)
+    def broadcast_data(self, sock, message):
+        """Send broadcast message to all clients other than the
+        server socket and the client socket from which the data is received."""
+        for socket in self.CONNECTION_LIST:
+            if socket != self._server_socket and socket != sock:            
+                socket.send("%s %s" % (sock.getpeername(), message))
+            
+    def start(self):
+        RECV_BUFFER = 4096
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.bind((self._server_ip, self._server_port))
+        self._server_socket.listen(10)
+        self.CONNECTION_LIST.append(self._server_socket)
+        self._confobj.logger.debug("TCP/IP Chat server process started");
+        while 1:
+            # get the list sockets
+            read_sockets,write_sockets,error_sockets = select.select(self.CONNECTION_LIST,[],[])
+            for sock in read_sockets:
+                if sock == self._server_socket:
+                    #new connection
+                    sockfd, addr = self._server_socket.accept()
+                    self.CONNECTION_LIST.append(sockfd)
+                    self._confobj.logger.debug("client (%s, %s) connected" % addr)
+                    #broadcast to other arenas the new client
+                    self.broadcast_data(sockfd, "new %s:%s" % addr)
+                else:
+                    # Data recieved
+                    try:
+                        data = sock.recv(RECV_BUFFER)
+                    except:
+                        self.broadcast_data(sock, "quit %s:%s" % addr)
+                        self._confobj.logger.debug("client (%s, %s) is offline" % addr)
+                        sock.close()
+                        self.CONNECTION_LIST.remove(sock)
+                        continue
+                    if data:
+                        # The client sends some valid data, process it
+                        if data == "q" or data == "Q":
+                            self.broadcast_data(sock, "quit %s:%s" % addr)
+                            self._confobj.logger.debug("client (%s, %s) quits" % addr)
+                            sock.close()
+                            self.CONNECTION_LIST.remove(sock)
+                        else:
+                            self.broadcast_data(sock, data)
+        self._server_socket.close()
