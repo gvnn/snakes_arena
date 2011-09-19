@@ -28,6 +28,8 @@ class SnakeRequestHandler(SocketServer.BaseRequestHandler):
     def __init__(self, request, client_address, server):
         conf.logger.debug('%s %s' % client_address)
         SocketServer.BaseRequestHandler.__init__(self, request, client_address, server)
+        socket = self.request[1]
+        server._tmp_clients.append(socket)
         return
 
     def setup(self):
@@ -44,16 +46,18 @@ class SnakeRequestHandler(SocketServer.BaseRequestHandler):
         conf.logger.debug('finish')
         return SocketServer.BaseRequestHandler.finish(self)
 
-class SnakeServer(SocketServer.UDPServer):
+class SnakeServer(SocketServer.TCPServer):
+    
+    _tmp_clients = []
     
     def __init__(self, server_address, handler_class=SnakeRequestHandler):
         conf.logger.debug('%s', server_address)
-        SocketServer.UDPServer.__init__(self, server_address, handler_class)
+        SocketServer.TCPServer.__init__(self, server_address, handler_class)
         return
 
     def server_activate(self):
         conf.logger.debug('server_activate')
-        SocketServer.UDPServer.server_activate(self)
+        SocketServer.TCPServer.server_activate(self)
         return
 
     def serve_forever(self):
@@ -65,24 +69,24 @@ class SnakeServer(SocketServer.UDPServer):
 
     def handle_request(self):
         conf.logger.debug('handle_request')
-        return SocketServer.UDPServer.handle_request(self)
+        return SocketServer.TCPServer.handle_request(self)
 
     def verify_request(self, request, client_address):
         conf.logger.debug('verify_request(%s, %s)', request, client_address)
-        return SocketServer.UDPServer.verify_request(self, request, client_address)
+        return SocketServer.TCPServer.verify_request(self, request, client_address)
 
     def process_request(self, request, client_address):
         conf.logger.debug('process_request(%s, %s)', request, client_address)
-        return SocketServer.UDPServer.process_request(self, request, client_address)
+        return SocketServer.TCPServer.process_request(self, request, client_address)
 
     def server_close(self):
         conf.logger.debug('server_close')
-        return SocketServer.UDPServer.server_close(self)
+        return SocketServer.TCPServer.server_close(self)
 
     def finish_request(self, request, client_address):
         conf.logger.debug('finish_request(%s, %s)', request, client_address)
-        return SocketServer.UDPServer.finish_request(self, request, client_address)
+        return SocketServer.TCPServer.finish_request(self, request, client_address)
 
     def close_request(self, request_address):
         conf.logger.debug('close_request(%s)', request_address)
-        return SocketServer.UDPServer.close_request(self, request_address)
+        return SocketServer.TCPServer.close_request(self, request_address)

@@ -25,6 +25,7 @@ def start_server():
     t = threading.Thread(target=s.serve_forever)
     t.setDaemon(True)
     t.start()
+    return s
 
 def start_client():
     """ starts a new client session """
@@ -52,13 +53,19 @@ if __name__ == "__main__":
     if mode in ['SERVER', 'CLIENT']:
         conf.logger.info("mode chosen %s" % mode)
         s = None
+        ss = None
         if mode == "SERVER":
-            start_server()
+            ss = start_server()
         else:
             s = start_client()
+        
         cocos.director.director.init()
         arena_layer = arena.Arena()
+        
         if s:
             arena_layer._tmp_socket = s
+        if ss:
+            arena_layer._tmp_server_socket = ss
+            
         main_scene = cocos.scene.Scene(arena_layer)
         cocos.director.director.run(main_scene)
