@@ -3,6 +3,8 @@ import config
 import server
 import client
 import threading
+import cocos
+import arena
 
 conf = None #config obj
 
@@ -52,4 +54,7 @@ if __name__ == "__main__":
             start_server()
         else:
             start_client()
-    raw_input("\npress any key to exit\n")
+        cocos.director.director.init()
+        arena_layer = arena.Arena()
+        main_scene = cocos.scene.Scene(arena_layer)
+        cocos.director.director.run(main_scene)

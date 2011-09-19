@@ -8,11 +8,15 @@ conf = None #config obj
 def get_available_ips():
     ips = []
     if os.name != "nt":
-        import netifaces
-        for i, interface in enumerate(netifaces.interfaces()):
-            ifaddresses = netifaces.ifaddresses(str(interface))
-            if netifaces.AF_INET in ifaddresses:
-                ips.append(ifaddresses[netifaces.AF_INET][0]["addr"])
+        try:
+            import netifaces
+            for i, interface in enumerate(netifaces.interfaces()):
+                ifaddresses = netifaces.ifaddresses(str(interface))
+                if netifaces.AF_INET in ifaddresses:
+                    ips.append(ifaddresses[netifaces.AF_INET][0]["addr"])
+        except ImportError, e:
+            ips.append("127.0.0.1")
+            ips.append(socket.gethostbyname(socket.gethostname()))
     else:
         # local and public network interface
         ips.append("127.0.0.1")
