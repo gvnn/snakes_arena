@@ -40,6 +40,7 @@ def start_client():
     t = threading.Thread(target=c.connect)
     t.setDaemon(True)
     t.start()
+    return c
 
 if __name__ == "__main__":
     #load configs
@@ -49,12 +50,15 @@ if __name__ == "__main__":
     print("Welcome reptile,")
     mode = raw_input("do you want to be SERVER or a CLIENT? ").upper()
     if mode in ['SERVER', 'CLIENT']:
-        conf.logger.info("mode chosen %s" % mode);
+        conf.logger.info("mode chosen %s" % mode)
+        s = None
         if mode == "SERVER":
             start_server()
         else:
-            start_client()
+            s = start_client()
         cocos.director.director.init()
         arena_layer = arena.Arena()
+        if s:
+            arena_layer._tmp_socket = s
         main_scene = cocos.scene.Scene(arena_layer)
         cocos.director.director.run(main_scene)

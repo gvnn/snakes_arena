@@ -19,3 +19,6 @@ class SnakeClient:
         conf.logger.debug('client connect')
         self._sock.connect((self._server_ip, self._server_port))
         self._sock.send("hissssss")
+    
+    def send(self, msg):
+        self._sock.send(msg)
