@@ -43,7 +43,7 @@ class SnakeServer():
         """Send broadcast message to all clients other than the
         server socket and the client socket from which the data is received."""
         for socket in self.CONNECTION_LIST:
-            if socket != self._server_socket and socket != sock:            
+            if socket != self._server_socket and socket != sock:
                 socket.send("%s %s" % (sock.getpeername(), message))
             
     def start(self):

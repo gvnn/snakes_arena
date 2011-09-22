@@ -36,7 +36,7 @@ def start_client(ip = "", port = 0):
             port = int(conf.settings["server"]["port"])
         if ip == "":
             ip = "127.0.0.1"
-    return client.SnakeClient(ip, port)
+    return client.SnakeClient(ip, port, confobj)
 
 def main():
     #parse arguments
@@ -67,6 +67,9 @@ def main():
         #starting a new game
         cocos.director.director.init(resizable=False, width=600, height=600)
         cocos.director.director.run(arena.newgame(c))
+        if mode == "CLIENT":
+            #send client leaving
+            c.send_command("q")
 
 if __name__ == "__main__":
     #load configs
@@ -74,7 +77,3 @@ if __name__ == "__main__":
     confobj.logger.info("configuration loded")
     #start program
     main()
-    #while 1:
-    #    send_data = raw_input("Enter data to send (q or Q to quit):\n")
-    #    if send_data == "q" or send_data == "Q":
-    #        break
