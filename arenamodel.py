@@ -20,5 +20,5 @@ class ArenaModel(pyglet.event.EventDispatcher):
         
     def set_controller( self, ctrl ):
         self.ctrl = weakref.ref(ctrl)
-        
+
 ArenaModel.register_event_type('on_change_direction')

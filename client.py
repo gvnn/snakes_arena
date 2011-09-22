@@ -2,8 +2,9 @@
 import socket
 import thread
 import sys
+import pyglet
 
-class SnakeClient:
+class SnakeClient(pyglet.event.EventDispatcher):
 
     RECV_BUFFER = 4096
     
@@ -25,7 +26,8 @@ class SnakeClient:
                 thread.interrupt_main()
                 break
             else:
-                self._confobj.logger.debug("Received data: %s" % self.recv_data)
+                self._confobj.logger.debug("%s" % self.recv_data)
+                self.dispatch_event("on_client_connected")
     
     def send_command(self, command = ""):
         if command:
@@ -39,3 +41,5 @@ class SnakeClient:
         self.client_socket.connect((ip, port))
         thread.start_new_thread(self.recv_data,())
         thread.start_new_thread(self.send_command,())
+
+SnakeClient.register_event_type('on_client_connected')

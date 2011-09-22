@@ -44,7 +44,7 @@ class SnakeServer():
         server socket and the client socket from which the data is received."""
         for socket in self.CONNECTION_LIST:
             if socket != self._server_socket and socket != sock:
-                socket.send("%s %s" % (sock.getpeername(), message))
+                socket.send("%s" % message)
             
     def start(self):
         RECV_BUFFER = 4096
@@ -63,13 +63,13 @@ class SnakeServer():
                     self.CONNECTION_LIST.append(sockfd)
                     self._confobj.logger.debug("client (%s, %s) connected" % addr)
                     #broadcast to other arenas the new client
-                    self.broadcast_data(sockfd, "new %s:%s" % addr)
+                    self.broadcast_data(sockfd, "%s:%s:new" % addr)
                 else:
                     # Data recieved
                     try:
                         data = sock.recv(RECV_BUFFER)
                     except:
-                        self.broadcast_data(sock, "quit %s:%s" % addr)
+                        self.broadcast_data(sock, "%s:%s:quit" % addr)
                         self._confobj.logger.debug("client (%s, %s) is offline" % addr)
                         sock.close()
                         self.CONNECTION_LIST.remove(sock)
@@ -77,7 +77,7 @@ class SnakeServer():
                     if data:
                         # The client sends some valid data, process it
                         if data == "q" or data == "Q":
-                            self.broadcast_data(sock, "quit %s:%s" % addr)
+                            self.broadcast_data(sock, "%s:%s:quit" % addr)
                             self._confobj.logger.debug("client (%s, %s) quits" % addr)
                             sock.close()
                             self.CONNECTION_LIST.remove(sock)
