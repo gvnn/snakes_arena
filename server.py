@@ -39,12 +39,12 @@ class SnakeServer():
         self._server_ip = ip
         self._server_port = port
 
-    def broadcast_data(self, sock, message):
+    def broadcast_data(self, sock, message, addr):
         """Send broadcast message to all clients other than the
         server socket and the client socket from which the data is received."""
         for socket in self.CONNECTION_LIST:
             if socket != self._server_socket and socket != sock:
-                socket.send("%s" % message)
+                socket.send("%s:%s" % (addr, message))
             
     def start(self):
         RECV_BUFFER = 4096
@@ -61,26 +61,26 @@ class SnakeServer():
                     #new connection
                     sockfd, addr = self._server_socket.accept()
                     self.CONNECTION_LIST.append(sockfd)
-                    self._confobj.logger.debug("client (%s, %s) connected" % addr)
                     #broadcast to other arenas the new client
-                    self.broadcast_data(sockfd, "%s:%s:new" % addr)
+                    self.broadcast_data(sockfd, "new", "%s:%s" % addr)
+                    self._confobj.logger.debug("client (%s, %s) connected" % addr)
                 else:
                     # Data recieved
                     try:
                         data = sock.recv(RECV_BUFFER)
                     except:
-                        self.broadcast_data(sock, "%s:%s:quit" % addr)
-                        self._confobj.logger.debug("client (%s, %s) is offline" % addr)
+                        self.broadcast_data(sock, "quit", "%s:%s" % addr)
                         sock.close()
                         self.CONNECTION_LIST.remove(sock)
+                        self._confobj.logger.debug("client (%s, %s) is offline" % addr)
                         continue
                     if data:
                         # The client sends some valid data, process it
                         if data == "q" or data == "Q":
-                            self.broadcast_data(sock, "%s:%s:quit" % addr)
-                            self._confobj.logger.debug("client (%s, %s) quits" % addr)
+                            self.broadcast_data(sock, "quit", "%s:%s" % addr)
                             sock.close()
                             self.CONNECTION_LIST.remove(sock)
+                            self._confobj.logger.debug("client (%s, %s) quits" % addr)
                         else:
-                            self.broadcast_data(sock, data)
+                            self.broadcast_data(sock, data, "%s:%s" % addr)
         self._server_socket.close()
