@@ -35,26 +35,39 @@ class ArenaView(cocos.layer.Layer):
         
     def on_remote_connected(self, clientid):
         self.client.confobj.logger.debug("%s" % clientid)
-        self.messages.append("%d - %s \n ciao" % (time.time(), clientid))
+        self.messages.append("%d - %s" % (time.time(), clientid))
         
     def on_remote_disconnected(self, clientid):
         self.client.confobj.logger.debug("%s" % clientid)
 
 class ConsoleLayer(cocos.layer.Layer):
     
-    labels = []
+    labelslist = []
+    labelindex = 0;
     
-    def label(self):
-        return cocos.text.Label("", font_size = 11, font_name = "Courier New", color = (0, 255, 0, 255))
+    def label(self, text):
+        return cocos.text.Label(text, font_size = 11, font_name = "Courier New", color = (0, 255, 0, 255), position = (5, -7))
     
     def __init__(self):
         super(ConsoleLayer, self).__init__()
+        w,h = director.get_window_size()
+        self.add(cocos.draw.Line(start=(0,60), end=(w,60), color=(0, 255, 0, 255)), "console_delimiter")
     
     def push_text(self, text):
-        label = self.label()
-        label.element.text = text
-        labels.insert(label, 0)
-    
-    def draw_labels(self):
-        for i in range(3):
+        #For some reason the push and pop in the children list of the layer looks completely random
+        #I'm keeping a dictionary of labels
+        label = self.label(text)
+        label_name = "row%d" % self.labelindex
+        
+        if len(self.labelslist) > 3:
+            label_to_remove = self.labelslist.pop(0)
+            self.remove(label_to_remove)
             
+        self.labelslist.append(label_name)
+        self.labelindex += 1
+        self.add(label, name = label_name)
+        self.move_labels()
+        
+    def move_labels(self):
+        for idx, label in enumerate(self.labelslist):
+            self.get(label).do(ac.MoveBy((0, 12), duration=0.3))
